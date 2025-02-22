@@ -4,7 +4,7 @@ const Transaction = require('../models/Transaction');
 
 const router = express.Router();
 
-// ✅ Function to Convert Month Name to Number
+//  Function to Convert Month Name to Number
 const getMonthNumber = (month) => {
   const monthNames = {
     January: 1, February: 2, March: 3, April: 4, May: 5, June: 6,
@@ -13,27 +13,27 @@ const getMonthNumber = (month) => {
   return monthNames[month] || null;
 };
 
-// ✅ 1. Initialize Database
+//  Initialize Database
 router.get('/initialize', async (req, res) => {
     try {
       const response = await axios.get('https://s3.amazonaws.com/roxiler.com/product_transaction.json');
   
-      // Clear existing data
+      
       await Transaction.deleteMany({});
   
-      // Transform data with proper date conversion
+      
       const formattedData = response.data.map(item => {
         let parsedDate;
   
         try {
-          parsedDate = new Date(item.dateOfSale); // Try parsing date directly
+          parsedDate = new Date(item.dateOfSale); 
           if (isNaN(parsedDate.getTime())) throw new Error("Invalid Date");
   
-          // Convert to UTC string (MongoDB stores dates in UTC)
+          
           parsedDate = new Date(parsedDate.toISOString());
         } catch (error) {
-          console.error(`🚨 Invalid Date Found: ${item.dateOfSale}`);
-          return null; // Skip invalid entries
+          console.error(` Invalid Date Found: ${item.dateOfSale}`);
+          return null; 
         }
   
         return {
@@ -44,9 +44,9 @@ router.get('/initialize', async (req, res) => {
           category: item.category,
           image: item.image,
           sold: item.sold,
-          dateOfSale: parsedDate, // ✅ Ensure MongoDB stores a valid date
+          dateOfSale: parsedDate, 
         };
-      }).filter(item => item !== null); // Remove invalid records
+      }).filter(item => item !== null); 
   
       // Insert transformed data into MongoDB
       await Transaction.insertMany(formattedData);
@@ -62,21 +62,21 @@ router.get('/initialize', async (req, res) => {
   
   
 
-// ✅ 2. List Transactions with Search & Pagination
+// List Transactions with Search & Pagination
 
-// ✅ GET: Fetch transactions with pagination & search by month
+//  Fetch transactions with pagination & search by month
 router.get('/transactions', async (req, res) => {
   try {
     let { month, search, page = 1, perPage = 10 } = req.query;
     page = parseInt(page);
     perPage = parseInt(perPage);
 
-    // ✅ Ensure month is a valid string
+    //  Ensure month is a valid string
     if (!month) {
       return res.status(400).json({ error: "Month is required (e.g., 'February')" });
     }
 
-    // ✅ Convert month name to number (e.g., "February" → 2)
+    //  Convert month name to number 
     const monthNames = {
       January: 1, February: 2, March: 3, April: 4, May: 5, June: 6,
       July: 7, August: 8, September: 9, October: 10, November: 11, December: 12
@@ -87,10 +87,10 @@ router.get('/transactions', async (req, res) => {
       return res.status(400).json({ error: "Invalid month name. Use full name (e.g., 'February')." });
     }
 
-    // ✅ Date range filter (ignoring year)
+    //  Date range filter (ignoring year)
     const transactions = await Transaction.find({
-      $expr: { $eq: [{ $month: "$dateOfSale" }, monthNumber] }, // Extract month from date
-      ...(search ? {  // ✅ Search filter on title/description/price
+      $expr: { $eq: [{ $month: "$dateOfSale" }, monthNumber] }, 
+      ...(search ? {  
         $or: [
           { title: { $regex: search, $options: 'i' } },
           { description: { $regex: search, $options: 'i' } },
@@ -110,7 +110,7 @@ router.get('/transactions', async (req, res) => {
 
 
 
-// ✅ 1. Statistics API (Fixed Month Filtering)
+//   Statistics API (Fixed Month Filtering)
 router.get('/statistics', async (req, res) => {
   try {
     const { month } = req.query;
@@ -119,12 +119,12 @@ router.get('/statistics', async (req, res) => {
       return res.status(400).json({ error: "Invalid month. Use full name (e.g., 'February')." });
     }
 
-    // ✅ Filter transactions by month (ignoring year)
+    //  Filter transactions by month (ignoring year)
     const transactions = await Transaction.find({
       $expr: { $eq: [{ $month: "$dateOfSale" }, monthNumber] }
     });
 
-    // ✅ Calculate statistics
+    //  Calculate statistics
     const totalSale = transactions.reduce((sum, txn) => txn.sold ? sum + txn.price : sum, 0);
     const soldItems = transactions.filter(txn => txn.sold).length;
     const notSoldItems = transactions.length - soldItems;
@@ -135,7 +135,7 @@ router.get('/statistics', async (req, res) => {
   }
 });
 
-// ✅ 2. Bar Chart API (Fixed Month Filtering)
+//  Bar Chart API (Fixed Month Filtering)
 router.get('/bar-chart', async (req, res) => {
   try {
     const { month } = req.query;
@@ -144,7 +144,7 @@ router.get('/bar-chart', async (req, res) => {
       return res.status(400).json({ error: "Invalid month. Use full name (e.g., 'February')." });
     }
 
-    // ✅ Define price ranges
+    //  Define price ranges
     const priceRanges = [
       { range: "0-100", min: 0, max: 100 },
       { range: "101-200", min: 101, max: 200 },
@@ -160,7 +160,7 @@ router.get('/bar-chart', async (req, res) => {
 
     let response = {};
 
-    // ✅ Loop through each price range and count items
+    //  Loop through each price range and count items
     for (const { range, min, max } of priceRanges) {
       response[range] = await Transaction.countDocuments({
         $expr: { $eq: [{ $month: "$dateOfSale" }, monthNumber] },
@@ -174,7 +174,7 @@ router.get('/bar-chart', async (req, res) => {
   }
 });
 
-// ✅ 3. Pie Chart API (Fixed Month Filtering)
+//  Pie Chart API (Fixed Month Filtering)
 router.get('/pie-chart', async (req, res) => {
   try {
     const { month } = req.query;
@@ -183,7 +183,7 @@ router.get('/pie-chart', async (req, res) => {
       return res.status(400).json({ error: "Invalid month. Use full name (e.g., 'February')." });
     }
 
-    // ✅ Aggregate unique categories and count items per category
+    //  Aggregate unique categories and count items per category
     const categories = await Transaction.aggregate([
       { $match: { $expr: { $eq: [{ $month: "$dateOfSale" }, monthNumber] } } },
       { $group: { _id: "$category", count: { $sum: 1 } } }
@@ -195,7 +195,7 @@ router.get('/pie-chart', async (req, res) => {
   }
 });
 
-// ✅ 4. Combined API (Fetching All Three APIs)
+//  Combined API (Fetching All Three APIs)
 router.get('/combined', async (req, res) => {
   try {
     const { month } = req.query;
@@ -203,7 +203,7 @@ router.get('/combined', async (req, res) => {
       return res.status(400).json({ error: "Month is required (e.g., 'February')." });
     }
 
-    // ✅ Fetch all APIs in parallel
+    //  Fetch all APIs in parallel
     const [statistics, barChart, pieChart] = await Promise.all([
       fetch(`${req.protocol}://${req.get('host')}/api/statistics?month=${month}`).then(res => res.json()),
       fetch(`${req.protocol}://${req.get('host')}/api/bar-chart?month=${month}`).then(res => res.json()),

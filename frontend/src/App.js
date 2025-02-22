@@ -25,7 +25,7 @@ const App = () => {
   }, [month, page, search]);
 
   const fetchTransactions = async () => {
-    const res = await axios.get(`http://localhost:5000/api/transactions`, {
+    const res = await axios.get(`https://transaction-backend-jyoe.onrender.com/api/transactions`, {
       params: { month, search }
     });
     
@@ -39,12 +39,12 @@ const App = () => {
   };
 
   const fetchStatistics = async () => {
-    const res = await axios.get(`http://localhost:5000/api/statistics?month=${month}`);
+    const res = await axios.get(`https://transaction-backend-jyoe.onrender.com/api/statistics?month=${month}`);
     setStatistics(res.data);
   };
 
   const fetchBarChartData = async () => {
-    const res = await axios.get(`http://localhost:5000/api/bar-chart?month=${month}`);
+    const res = await axios.get(`https://transaction-backend-jyoe.onrender.com/api/bar-chart?month=${month}`);
     setBarChartData(res.data);
   };
 
