@@ -9,7 +9,7 @@ const transactionSchema = new mongoose.Schema({
   category: { type: String },
   image: { type: String },
   sold: { type: Boolean, required: true },
-  dateOfSale: { type: Date, required: true }, // ✅ Ensure Date type
+  dateOfSale: { type: Date, required: true }, 
 });
 
 module.exports = mongoose.model('Transaction', transactionSchema);
